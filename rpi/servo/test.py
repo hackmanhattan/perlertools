@@ -7,8 +7,9 @@ from pynput import keyboard
 servo = Servo(23)
 motor_pin = 14
 motor_delay = 1.2
-pos_list = [4.4,5.8,7.4]
-cur_pos = 1.0
+pos_list = [6.5,8.2,9.7]
+cur_pos = 1.00
+servo_on = True
 def on_press(key):
 	tgt_pos = servo.get_pos()
 	if key==Key.up:
@@ -19,21 +20,26 @@ def on_press(key):
 		servo.set_pos(tgt_pos)
 	if str(key)=="'q'":
 		tgt_pos = pos_list[0]
-		servo.set_pos(tgt_pos)
+		servo.move(tgt_pos,0.11,True)
 		time.sleep(1)
+	if str(key)=="'w'":
 		tgt_pos = pos_list[1]
-		servo.set_pos(tgt_pos)
+		servo.move(tgt_pos,0.11,True)
+		time.sleep(1)
 	if str(key)=="'e'":
 		tgt_pos = pos_list[2]
-		servo.set_pos(tgt_pos)
-		time.sleep(motor_delay)
-		tgt_pos = pos_list[1]
-		servo.set_pos(tgt_pos)
+		servo.move(tgt_pos,0.11,True)
+		time.sleep(1)
+	if str(key)=="'r'":
+		servo.stop_servo()
+	if str(key)=="'t'":
+		servo.start_servo()
 	if key==Key.left:
 		GPIO.output(motor_pin,GPIO.HIGH)
 		time.sleep(motor_delay)
 		GPIO.output(motor_pin,GPIO.LOW)
-	print(servo.get_pos())
+	tgt_pos = servo.get_pos()
+	print(tgt_pos)
 try:
 	threshold = 120
 	# GPIO INIT
@@ -43,6 +49,7 @@ try:
 	idx = 0
 	listener = keyboard.Listener(on_press=on_press)
 	listener.start()
+	servo.move(pos_list[1],0.11,True)
 	while True:
 		idx+=1
 		if idx > 1000:
