@@ -72,10 +72,10 @@ class Servo(Exception):
 		mov_list = get_wiggle_path(1,self.pos,self.round_val)
 		self.action = "wiggle sync " + str(mov_list)
 		for idx in mov_list:
-			cur_diff = (idx-3)*0.1
-			tgt_pos = self.pos + cur_diff
-			self.p.ChangeDutyCycle(tgt_pos)
-			time.sleep(0.5)
+			# cur_diff = (idx-3)*0.1
+			# tgt_pos = self.pos + cur_diff
+			self.p.ChangeDutyCycle(self.pos)
+			time.sleep(0.25)
 		self.stop_servo()
 	def stop_servo(self):
 		self.p.stop()

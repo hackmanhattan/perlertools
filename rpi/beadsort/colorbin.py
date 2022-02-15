@@ -59,4 +59,5 @@ class ColorBin(pygame.sprite.Sprite):
 			self.beadlist[idx].draw_bead(DISPLAY)
 		DISPLAY.blit(text,(self.rect.x-50,self.rect.y))
 	def add_bead(self,tgt_bead):
+		print("adding bead",tgt_bead.get_color())
 		self.beadlist.append(tgt_bead)

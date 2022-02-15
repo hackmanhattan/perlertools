@@ -32,22 +32,14 @@ class ColorCam:
 		
 		with PiRGBArray(self.camera,size=self.resolution) as stream:
 			self.camera.capture(stream,format="bgr",use_video_port=True)
-	def add_overlay(self,tgt_x,tgt_y):
-			# create image
-			start_coord = (int(tgt_x-self.sample_dimension),int(tgt_y-self.sample_dimension))
-			end_coord = (int(tgt_x+self.sample_dimension),int(tgt_y+self.sample_dimension))
-			print("add_overlay",start_coord,end_coord)
-			tgt_img_file = "picamcd/white_square.png"
-			img_a = np.full((self.height,self.width,4),(255,255,255,128),dtype=np.uint8)
-			res_img = cv2.rectangle(img_a,start_coord,end_coord,(0,0,0,255),4)
-			cv2.imwrite(tgt_img_file,res_img)
-			tgt_ol_img = cv2.imread(tgt_img_file)
-			self.overlay = self.camera.add_overlay(tgt_ol_img,alpha=128,layer=3)
-			self.overlay.fullscreen=False
-			self.overlay.window = self.window
-
+	def add_overlay(self):
+		# create image
+		self.overlay = self.camera.add_overlay(self.overlay_img,alpha=125,layer=3)
+		self.overlay.fullscreen=False
+		self.overlay.window = self.window
+	def remove_overlay(self):
+		self.camera.remove_overlay(self.overlay)
 	def set_default_color(self,tgt_color):
-		print(tgt_color)
 		self.default_color = tgt_color
 	def get_default_color(self):
 		return self.default_color
@@ -77,7 +69,9 @@ class ColorCam:
 	def set_overlay_img(self,tgt_x,tgt_y,tgt_color):
 		start_coord = (int(tgt_x-self.sample_dimension),int(tgt_y-self.sample_dimension))
 		end_coord = (int(tgt_x+self.sample_dimension),int(tgt_y+self.sample_dimension))
-		img_a = np.full((self.height,self.width,4),(0,0,0,255),dtype=np.uint8)
 		ret_list = [element*255 for element in tgt_color.rgb] + [255]
 		ret_list = tuple(ret_list)
-		self.overlay_img = cv2.rectangle(img_a,start_coord,end_coord,ret_list,4)
+		img_a = np.full((self.height,self.width,4),(255,0,0,0),dtype=np.uint8)
+		res_img = cv2.rectangle(img_a,start_coord,end_coord,ret_list,4)
+		self.overlay_img = res_img
+	

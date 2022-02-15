@@ -23,47 +23,51 @@ pos_key_list = list(position_dict.keys())
 DISPLAY= pygame.display.set_mode((screen_w, screen_h))
 #LOG CONFIG
 cam = ColorCam()
-cam.add_overlay(bead_loc_x,bead_loc_y)
+
 #FONT
 
 def_delay = 0.5
-
+motor_delay = 0.1
 def get_bead():
 	#check if bead exists
+	servo.set_pos(position_dict["home"])
 	cur_color = cam.get_color(bead_loc_x,bead_loc_y)
-	cur_diff = get_difference(cur_color,cam.get_default_color())
-	print(cur_diff)
+	default_color = cam.get_default_color()
+	cur_diff = get_difference(cur_color,default_color)
 	draw_cam_color(cam)
-	while cur_diff < color_threshold*0.1:
-		motor.run(0.3)
-		time.sleep(2)
-		# wiggle
-		# servo.move(position_dict["home"],0.2,True)
-		servo.wiggle()
+	while cur_diff < color_threshold*0.2:
 		servo.set_pos(position_dict["home"])
+		motor.run(motor_delay)
+		time.sleep(1)
 		cur_color = cam.get_color(bead_loc_x,bead_loc_y)
-		cur_diff = get_difference(cur_color,cam.get_default_color())
-		print(cur_diff,color_threshold*0.1)
+		cur_diff = get_difference(cur_color,default_color)
 		draw_cam_color(cam)
+	print("found diff",cur_diff)
 	#return bead
-	ret_bead = Bead()
-	ret_bead.set_color(cur_color)
+	ret_bead = Bead(cur_color)
+	print("creating bead with color ",cur_color)
 	pygame.display.update()
 	return ret_bead
 
 def draw_cam_color(tgt_cam):
+	init_y = cam_h - 60
 	def_color = tgt_cam.get_default_color()
-	def_rect = pygame.Rect(10,cam_h,50,70)
+	def_rect = pygame.Rect(100,init_y,50,70)
 	def_surf = pygame.Surface((50, 70))
 	def_surf.fill(hex_tuple(def_color))
 	DISPLAY.blit(def_surf,def_rect)
+	def_text = smallfont.render("default",True,hex_tuple(color_000))
+	DISPLAY.blit(def_text,(10,init_y))
+
+	init_y+=80
 	cur_color = tgt_cam.get_color(bead_loc_x,bead_loc_y)
-	cam_rect = pygame.Rect(80,cam_h,50,70)
+	cam_rect = pygame.Rect(100,init_y,50,70)
 	cam_surf = pygame.Surface((50,70))
 	cam_surf.fill(hex_tuple(cur_color))
-	print(def_color,cur_color)
 	DISPLAY.blit(cam_surf,cam_rect)
-
+	cam_text = smallfont.render("CAM",True,hex_tuple(color_000))
+	DISPLAY.blit(cam_text,(10,init_y))
+	pygame.display.update()
 
 def sort_bead(tgt_bead,tgt_bin_list):
 	tgt_diff = 1000
@@ -90,21 +94,30 @@ def refresh_servo(tgt_servo):
 	DISPLAY.blit(text,(servo_status_rect.x-50,servo_status_rect.y))
 	textb = smallfont.render(servo.get_action(),True,hex_tuple(color_000))
 	DISPLAY.blit(textb,(servo_status_rect.x-50,servo_status_rect.y+30))
-def refresh_bins(tgt_bead_list,tgt_bin_list):
+def refresh_bins(tgt_bin_list):
 	DISPLAY.fill(hex_tuple(Color("white"))) #clear screen
 	for idx in range(len(tgt_bin_list)):
 		tgt_bin_list[idx].move_to(cam_w+10,init_bin_y + idx*52)
 		tgt_bin_list[idx].draw_bin(DISPLAY)
 
+def init_cam():
+	default_color = cam.get_color(bead_loc_x,bead_loc_y)
+	cam.set_default_color(default_color)
+	cam.set_overlay_img(bead_loc_x,bead_loc_y,default_color)
+	cam.add_overlay()
 def main():
 	#init code
 	filter_bin = ColorBin(Color("black"),-1,bead_x_cnt)
 	filter_bin.move_to(cam_w+10,10)
-	bin_list = [filter_bin]
+	red_bin = ColorBin(Color("#bc2c33"),color_threshold,bead_x_cnt)
+	red_bin.move_to(cam_w+10,62)
+	bin_list = [red_bin,filter_bin]
 	# default color_assume empty chamber
-	default_color = cam.get_color(bead_loc_x,bead_loc_y)
-	cam.set_default_color(default_color)
+	
 	servo.move(position_dict["home"],0.05,True)
+	servo.move(position_dict["graveyard"],0.05,True)
+	servo.move(position_dict["home"],0.05,True)
+	init_cam()
 	while True:
 		for event in pygame.event.get():
 			if event.type==QUIT:
@@ -125,35 +138,51 @@ def main():
 					servo.set_pos(position_dict["graveyard"])
 				if event.key == pygame.K_e: # dispense to filter
 					logging.info("filter")
-					print("filter")
 					#servo.move(position_dict["filter"],def_delay,True)
 					servo.set_pos(position_dict["filter"])
 				if event.key == pygame.K_w: # to home
 					logging.info("home")
-					servo.move(position_dict["home"],def_delay,True)
+					servo.set_pos(position_dict["home"])
 					time.sleep(1)
 					servo.set_pos(position_dict["home"])
 				if event.key == pygame.K_t:
 					print("setting default")
 					cur_color = cam.get_color(bead_loc_x,bead_loc_y)
 					cam.set_default_color(cur_color)
+					cam.remove_overlay()
+					cam.set_overlay_img(bead_loc_x,bead_loc_y,cur_color)
+					cam.add_overlay()
 				if event.key == pygame.K_s:
-					cur_bead = get_bead()
 					if len(bin_list) == 1: # add bin
+						cur_bead = get_bead()
+						print("creating bin",cur_bead.get_color())
 						new_bin = ColorBin(cur_bead.get_color(),color_threshold,bead_x_cnt)
 						new_bin.add_bead(cur_bead)
 						bin_list.insert(0,new_bin)
+						servo.set_pos(position_dict["filter"])
+						# servo.move(position_dict["filter"],0.2,True)
+						motor.run(motor_delay)
 					else:
-						bin_idx = sort_bead(cur_bead,bin_list)
-						bin_list[bin_idx].add_bead(cur_bead)
-						if bin_idx==0:
-							servo.set_pos(position_dict["filter"])
-						else:
-							servo.set_pos(position_dict["graveyard"])
+						for i in range(100):
+							cur_bead = get_bead()
+							bin_idx = sort_bead(cur_bead,bin_list)
+							bin_list[bin_idx].add_bead(cur_bead)
+							if bin_idx==0:
+								print("filtering bead")
+								servo.set_pos(position_dict["filter"])
+							else:
+								print("burying bead")
+								servo.set_pos(position_dict["graveyard"])
+							motor.run(motor_delay)
+							servo.set_pos(position_dict["home"])
+							motor.run(motor_delay)
+							print("homing")
+							refresh_bins(bin_list)
+							pygame.display.update()
 				if event.key == pygame.K_a:
 					logging.info("run_motor")
 					motor.run(0.5)
-		refresh_bins([],bin_list)
+		refresh_bins(bin_list)
 		refresh_servo(servo)
 		draw_cam_color(cam)
 		pygame.display.update()

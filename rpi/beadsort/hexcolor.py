@@ -3,12 +3,8 @@ from colour import Color
 def hex_tuple(tgt_color):
 	return [element*255 for element in tgt_color.rgb]
 
-def hex_tuple_alpha(tgt_color):
-	ret_list = [element*255 for element in tgt_color.rgb]
-	ret_list += [255]
-	return ret_list
+
 def get_difference(tgt_color_a,tgt_color_b):
-	print(tgt_color_a,tgt_color_b)
 	res = 0
 	for i in range(3):
 		res += (tgt_color_a.rgb[i] - tgt_color_b.rgb[i])**2
