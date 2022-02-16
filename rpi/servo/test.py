@@ -4,6 +4,7 @@ import time
 from servo import *
 from pynput.keyboard import Key,Listener,KeyCode
 from pynput import keyboard
+import pigpio
 servo = Servo(23)
 motor_pin = 14
 motor_delay = 1.2

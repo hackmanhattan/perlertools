@@ -17,7 +17,7 @@ pygame.init()
 logging.info("testb")
 smallfont = pygame.font.SysFont('Arial',35)
 servo = Servo(23)
-motor = Motor(14)
+motor = Motor(24) #needs to start off
 color_000 = Color("black")
 pos_key_list = list(position_dict.keys())
 DISPLAY= pygame.display.set_mode((screen_w, screen_h))
@@ -26,18 +26,18 @@ cam = ColorCam()
 
 #FONT
 
-def_delay = 0.5
-motor_delay = 0.1
+servo_delay = 0.001
+
 def get_bead():
 	#check if bead exists
-	servo.set_pos(position_dict["home"])
+	servo.set_pos_delay(position_dict["home"],servo_delay,True)
 	cur_color = cam.get_color(bead_loc_x,bead_loc_y)
 	default_color = cam.get_default_color()
 	cur_diff = get_difference(cur_color,default_color)
 	draw_cam_color(cam)
 	while cur_diff < color_threshold*0.2:
-		servo.set_pos(position_dict["home"])
-		motor.run(motor_delay)
+		servo.set_pos_delay(position_dict["home"],servo_delay,True)
+		motor.run_delay(motor_duration,motor_delay)
 		time.sleep(1)
 		cur_color = cam.get_color(bead_loc_x,bead_loc_y)
 		cur_diff = get_difference(cur_color,default_color)
@@ -80,16 +80,16 @@ def sort_bead(tgt_bead,tgt_bin_list):
 			ret_idx = bin_idx
 	return ret_idx
 
-def refresh_servo(tgt_servo):
+def refresh_servo():
 	servo_color = Color("gray") 
-	if tgt_servo.check_moving():
+	if servo.check_moving() is 1:
 		servo_color = Color("green")
 
-	servo_status_rect = pygame.Rect(200,cam_h+2,50,50)
-	servo_status_surf = pygame.Surface((50, 50))
+	servo_status_rect = pygame.Rect(servo_win_x,servo_win_y,50,30)
+	servo_status_surf = pygame.Surface((50, 30))
 	servo_status_surf.fill(hex_tuple(servo_color))
 	DISPLAY.blit(servo_status_surf,servo_status_rect)
-	servo_pos = tgt_servo.get_pos()
+	servo_pos = servo.get_pos()
 	text = smallfont.render(str(servo_pos), True ,hex_tuple(color_000))
 	DISPLAY.blit(text,(servo_status_rect.x-50,servo_status_rect.y))
 	textb = smallfont.render(servo.get_action(),True,hex_tuple(color_000))
@@ -113,10 +113,7 @@ def main():
 	red_bin.move_to(cam_w+10,62)
 	bin_list = [red_bin,filter_bin]
 	# default color_assume empty chamber
-	
-	servo.move(position_dict["home"],0.05,True)
-	servo.move(position_dict["graveyard"],0.05,True)
-	servo.move(position_dict["home"],0.05,True)
+	servo.set_pos(position_dict["home"])
 	init_cam()
 	while True:
 		for event in pygame.event.get():
@@ -128,23 +125,20 @@ def main():
 					pygame.quit()
 					sys.exit()
 				if event.key == pygame.K_LEFT:
-					servo.set_pos(servo.get_pos()+0.1)
+					servo.set_pos(servo.get_pos()+servo_interval)
 				if event.key == pygame.K_RIGHT:
-					servo.set_pos(servo.get_pos()-0.1)
+					servo.set_pos(servo.get_pos()-servo_interval)
 				if event.key == pygame.K_q: # dispense to graveyard
 					logging.info("graveyard")
 					print("graveyard")
-					# servo.move(position_dict["graveyard"],def_delay,True)
-					servo.set_pos(position_dict["graveyard"])
+					servo.move(position_dict["graveyard"],servo_delay,True)
 				if event.key == pygame.K_e: # dispense to filter
 					logging.info("filter")
-					#servo.move(position_dict["filter"],def_delay,True)
-					servo.set_pos(position_dict["filter"])
+					servo.move(position_dict["filter"],servo_delay,True)
 				if event.key == pygame.K_w: # to home
 					logging.info("home")
-					servo.set_pos(position_dict["home"])
+					servo.move(position_dict["home"],servo_delay,True)
 					time.sleep(1)
-					servo.set_pos(position_dict["home"])
 				if event.key == pygame.K_t:
 					print("setting default")
 					cur_color = cam.get_color(bead_loc_x,bead_loc_y)
@@ -161,7 +155,7 @@ def main():
 						bin_list.insert(0,new_bin)
 						servo.set_pos(position_dict["filter"])
 						# servo.move(position_dict["filter"],0.2,True)
-						motor.run(motor_delay)
+						motor.run_delay(motor_duration,motor_delay)
 					else:
 						for i in range(100):
 							cur_bead = get_bead()
@@ -169,21 +163,23 @@ def main():
 							bin_list[bin_idx].add_bead(cur_bead)
 							if bin_idx==0:
 								print("filtering bead")
-								servo.set_pos(position_dict["filter"])
+								
+								servo.set_pos_delay(position_dict["filter"],servo_delay,True)
 							else:
 								print("burying bead")
-								servo.set_pos(position_dict["graveyard"])
-							motor.run(motor_delay)
+								servo.set_pos_delay(position_dict["graveyard"],servo_delay,True)
+								
+							motor.run_delay(motor_duration,motor_delay)
 							servo.set_pos(position_dict["home"])
-							motor.run(motor_delay)
+							motor.run_delay(motor_duration,motor_delay)
 							print("homing")
 							refresh_bins(bin_list)
 							pygame.display.update()
 				if event.key == pygame.K_a:
 					logging.info("run_motor")
-					motor.run(0.5)
+					motor.run_delay(motor_duration,motor_delay)
 		refresh_bins(bin_list)
-		refresh_servo(servo)
+		refresh_servo()
 		draw_cam_color(cam)
 		pygame.display.update()
 if __name__ == "__main__":
