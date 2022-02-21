@@ -12,7 +12,7 @@ def get_path(init_x, tgt_x,tgt_round):
 def get_wiggle_path(init_x,tgt_x,tgt_round):
     # TODO: Make more elegant
     mov_list = []
-    wiggle_diff = 100
+    wiggle_diff = 50
     
     if init_x > tgt_x:
         mov_list += [curx for curx in range(int(tgt_x),int((tgt_x-wiggle_diff)),-10)]
