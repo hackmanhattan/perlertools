@@ -18,3 +18,9 @@ class Motor:
 		time.sleep(tgt_duration)
 		GPIO.output(self.motor_pin,GPIO.LOW)
 		time.sleep(tgt_delay)
+	def wiggle(self,tgt_repeat_cnt):
+		for i in range(tgt_repeat_cnt):
+			GPIO.output(self.motor_pin,GPIO.HIGH)
+			time.sleep(0.1 + i*0.1)
+			GPIO.output(self.motor_pin,GPIO.LOW)
+			time.sleep(0.2)

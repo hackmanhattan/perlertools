@@ -6,9 +6,11 @@ screen_h = 600
 cam_w = 640
 cam_h = 480
 
-bead_loc_x = 330
-bead_loc_y = 240
-
+bead_loc_x = 314
+bead_loc_y = 225
+bead_loc_w = 30
+bead_loc_h = 50
+bead_loc_dimension = (bead_loc_w,bead_loc_h)
 init_bin_y = cam_h - 60
 
 bead_dimension = 10
@@ -19,14 +21,16 @@ color_wheel_y = 400
 
 max_threshold = get_difference(Color("black"),Color("white"))
 color_threshold = max_threshold/6
+def_threshold = color_threshold*0.25
 
-motor_duration = 0.04
-motor_delay = 0.6
+motor_duration = 0.4
+wiggle_delay = motor_duration * 1.25
+motor_delay = 0.2
 
 position_dict = {}
-position_dict["graveyard"] = 1415
-position_dict["home"] = 1715
-position_dict["filter"] = 2025
+position_dict["graveyard"] = 1510
+position_dict["home"] = 1815
+position_dict["filter"] = 2080
 
 
 color_x = cam_w + 10

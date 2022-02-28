@@ -1,6 +1,9 @@
 import numpy as np
 import cv2
 from PIL import Image
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+
 img_h = 480
 img_w = 640
 
@@ -18,7 +21,7 @@ def main():
 
 def white_square():
 	img_a = np.full((img_h,img_w,4),(0,0,0,255),dtype=np.uint8)
-	res_img = cv2.rectangle(img_a,start_coord,end_coord,(255,255,255,255),4)
+	res_img = cv2.rectangle(img_a,start_coord,end_coord,(255,255,255,255),2)
 	cv2.imwrite("./white_square.png",res_img)
 
 def transparent_square():
@@ -96,6 +99,17 @@ def convert_img():
 	image.save('output_indexed.png')
 	print(image.mode, image.size)
 
+def get_cropped_img():
+	bead_loc_x = 310
+	bead_loc_y = 240
+	bead_loc_dimension = 16
+	camera = PiCamera()
+	with PiRGBArray(camera,size=(640,480)) as stream:
+		camera.capture(stream,format="bgr",use_video_port=True)
+		image_arr = stream.array
+		im = Image.fromarray(image_arr)
+		im.save("test.png")
+
 def merge_img():
 	# why does this work
 	background = cv2.imread('./sample.png')
@@ -105,10 +119,11 @@ def merge_img():
 
 	cv2.imwrite('combined.png', added_image)
 
-white_square()
+# white_square()
 # transparent_square()
 # cv2_convert()
 # convert_img()
-merge_img()
+# merge_img()
 # transparent_pil()
 # stackoverflow()
+get_cropped_img()
