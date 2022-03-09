@@ -55,8 +55,6 @@ class Servo():
 	def set_pos(self,tgt_pos):
 		self.pos = round(tgt_pos,self.round_val)
 		self.pwm.set_servo_pulsewidth( self.sig_pin, tgt_pos)
-		print(self.pos,"yo")
-
 	def wiggle(self,cur_pos,tgt_pos):
 		# synchronous wiggle
 		mov_list = get_wiggle_path(cur_pos,tgt_pos,self.round_val)

@@ -8,14 +8,19 @@ RED = (255,0,0)
 class Bead(pygame.sprite.Sprite):
 	rect = pygame.Rect(0,0,10,10)
 	color = None
+	sort_color = None
 	surf = 0
 	def __init__(self,tgt_color):
 		super(Bead, self).__init__()
 		self.surf = pygame.Surface((10, 10))
 		self.color = tgt_color
+		self.sort_color = tgt_color
 		self.surf.fill(hex_tuple(self.color))
 		self.rect = self.surf.get_rect()
-		
+	def get_sort_color(self):
+		return self.sort_color
+	def set_sort_color(self,tgt_color):
+		self.sort_color = tgt_color
 	def move_to(self,x,y):
 		self.rect.x = x
 		self.rect.y = y
