@@ -13,7 +13,7 @@ class Stepper:
                  [0,0,0,1],
                  [1,0,0,1]]
     cur_position = 0
-    stepper_delay = 5
+    stepper_delay = 0.001
     def __init__(self,tgt_pin_list):
         self.stepper_pin_list = tgt_pin_list
         GPIO.setmode(GPIO.BCM)
@@ -23,13 +23,14 @@ class Stepper:
         # style
         self.stepper_delay = 0.001
     def set_delay(self,tgt_delay):
-        self.step_sequence = tgt_delay
+        self.stepper_delay = tgt_delay
 
     def set_position(self,tgt_pos):
         self.cur_position = tgt_pos
     def cleanup(self):
         for cur_pin in self.stepper_pin_list:
-            GPIO.setup(cur_pin,GPIO.LOW)
+            GPIO.output(cur_pin,GPIO.LOW)
+            time.sleep(0.2)
     def move(self,tgt_step_count,tgt_dir):
         i = 0
         motor_step_counter = 0
@@ -43,5 +44,3 @@ class Stepper:
                 GPIO.output( self.stepper_pin_list[cur_pin], self.step_sequence[cur_sequence][cur_pin] )
             time.sleep(self.stepper_delay)
         self.cleanup()
-
-        

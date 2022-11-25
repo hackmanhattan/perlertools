@@ -1,54 +1,74 @@
 from time import sleep
 import RPi.GPIO as GPIO
-import sys
-
-DIR = 26   # Direction GPIO Pin
-STEP = 19  # Step GPIO Pin
-CW = 1     # Clockwise Rotation
-CCW = 0    # Counterclockwise Rotation
-SPR = 48   # Steps per Revolution (360 / 7.5)
-EN = 16
-delay = 0.1
-
-def init():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(EN,GPIO.OUT)
-    GPIO.setup(DIR, GPIO.OUT)
-    GPIO.setup(STEP, GPIO.OUT)
-    GPIO.output(DIR, CW)
-
-def step(move_forward):
-    if move_forward:
-        GPIO.output(STEP, GPIO.HIGH)
-        sleep(delay)
-        GPIO.output(STEP, GPIO.LOW)            
-        sleep(delay)
-    else:
-        GPIO.output(STEP, GPIO.LOW)            
-        sleep(delay)
-        GPIO.output(STEP, GPIO.HIGH)
-        sleep(delay)
 
 
-def main():
-    init()
-    cur_delay = float(sys.argv[1])
-    try:
-        # enable
-        GPIO.output(EN,GPIO.LOW)
-        step_count = SPR * 10
-        print("SPIN ONE WAY ",sys.argv[1])
-        for x in range(step_count):
-            print("HIGH")
-            GPIO.output(STEP, GPIO.HIGH)
-            sleep(cur_delay)
-            print("LOW")
-            GPIO.output(STEP, GPIO.LOW)
-            sleep(cur_delay)
-        GPIO.cleanup()
-    except:
-        print("exit")
-        GPIO.cleanup()
-
-if __name__ == '__main__':
-    sys.exit(main()) 
+class Nema:
+	dir_pin = 20   # Direction GPIO Pin
+	step_pin_ = 16  # Step GPIO Pin
+	en_pin = 21
+	delay = 0.004
+	def __init__(self,tgt_dir,tgt_step,tgt_en,tgt_delay):
+		self.dir_pin = tgt_dir
+		self.step_pin = tgt_step
+		self.en_pin = tgt_en
+		self.delay = tgt_delay
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(self.dir_pin,GPIO.OUT)
+		GPIO.setup(self.step_pin,GPIO.OUT)
+		GPIO.setup(self.en_pin,GPIO.OUT)
+		GPIO.output(self.dir_pin,GPIO.LOW)
+		GPIO.output(self.en_pin,GPIO.LOW)
+	def set_delay(self,tgt_delay):
+		self.delay = tgt_delay
+	def step(self,tgt_delay):
+		GPIO.output(self.step_pin,GPIO.HIGH)
+		sleep(tgt_delay)
+		GPIO.output(self.step_pin,GPIO.LOW)
+		sleep(tgt_delay)
+	def run(self,tgt_steps,tgt_cw):
+		if tgt_cw:
+			GPIO.output(self.dir_pin,GPIO.HIGH)
+		else:
+			GPIO.output(self.dir_pin,GPIO.LOW)
+		for i in range(0,tgt_steps):
+			self.step(self.delay)
+	def ease(self,tgt_steps,tgt_cw):
+		if tgt_cw:
+			GPIO.output(self.dir_pin,GPIO.HIGH)
+		else:
+			GPIO.output(self.dir_pin,GPIO.LOW)
+		for i in range(0,int(tgt_steps*3/4)):
+			self.step(self.delay)
+		for i in range(0,int(tgt_steps/4)):
+			self.step(self.delay*4)
+	def wiggle(self):
+		wiggle_steps = 6
+		#left 
+		GPIO.output(self.dir_pin,GPIO.LOW)
+		for i in range(0,wiggle_steps):
+			GPIO.output(self.step_pin,GPIO.HIGH)
+			sleep(self.delay/4)
+			GPIO.output(self.step_pin,GPIO.LOW)
+			sleep(self.delay/4)
+		GPIO.output(self.dir_pin,GPIO.HIGH)
+		for i in range(0,wiggle_steps*2):
+			GPIO.output(self.step_pin,GPIO.HIGH)
+			sleep(self.delay/4)
+			GPIO.output(self.step_pin,GPIO.LOW)
+			sleep(self.delay/4)
+		GPIO.output(self.dir_pin,GPIO.LOW)
+		for i in range(0,wiggle_steps*2):
+			GPIO.output(self.step_pin,GPIO.HIGH)
+			sleep(self.delay/4)
+			GPIO.output(self.step_pin,GPIO.LOW)
+			sleep(self.delay/4)
+	def runDelay(self,tgt_steps,tgt_cw,tgt_delay):
+		if tgt_cw:
+			GPIO.output(self.dir_pin,GPIO.HIGH)
+		else:
+			GPIO.output(self.dir_pin,GPIO.LOW)
+		for i in range(tgt_steps):
+			GPIO.output(self.step_pin,GPIO.HIGH)
+			sleep(tgt_delay)
+			GPIO.output(self.step_pin,GPIO.LOW)
+			sleep(tgt_delay)

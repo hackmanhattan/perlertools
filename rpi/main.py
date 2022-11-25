@@ -1,4 +1,3 @@
-from byj.stepper import *
 from picamcd.colorcam import *
 import sys
 import time
@@ -14,23 +13,24 @@ from beadsort.colorbin import *
 import logging
 from threading import Thread
 import math
-
+from nema.nema import *
+from endstop.endstop import *
+#LOG CONFIG
 logging.basicConfig(filename="./example.log", level=logging.DEBUG)
-logging.info("test")
 pygame.init()
-logging.info("testb")
-smallfont = pygame.font.SysFont('Arial',35)
+smallfont = pygame.font.SysFont('Arial',25)
 servo = Servo(23,position_dict["home"])
-motor = Motor(24) #needs to start off
 color_000 = Color("black")
 stepper = Stepper(stepper_pin_list)
+stepper.set_delay(0.0025)
+nema = Nema(20,16,21,0.004)
 DISPLAY= pygame.display.set_mode((screen_w, screen_h))
-#LOG CONFIG
 cam = ColorCam()
 cur_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
 #color wheel
-color_wheel_list = generate_circle_color(1)
+color_wheel_list = generate_circle_color(0)
 bin_list = []
+endstop = Endstop(25)
 def get_bead():
 	#check if bead exists
 	servo.set_pos_delay(position_dict["home"],servo_delay,True)
@@ -52,7 +52,6 @@ def get_bead():
 			return Bead(Color("black"))
 	#return bead
 	ret_bead = Bead(cur_color)
-	print("creating bead with color ",cur_color,"diff",cur_diff)
 	return ret_bead
 
 def get_tgt_bin(tgt_bead,tgt_bin_list):
@@ -89,9 +88,8 @@ def sort_bead(tgt_bin_list):
 	servo.set_pos(position_dict["home"])
 	time.sleep(0.4)
 	motor.run_delay(wiggle_delay*0.5,motor_delay)
-
 	stepper.move(bin_idx*stepper_interval,False) # move slide to bin
-	
+
 def refresh_vals():
 	tmp_color = None
 	while tmp_color is None:
@@ -104,31 +102,37 @@ def draw_cam_color():
 	init_y = color_y
 	def_color = cam.get_default_color()
 	global cur_color
-	def_rect = pygame.Rect(color_x+120,init_y,50,70)
-	def_surf = pygame.Surface((50, 70))
-	def_surf.fill(hex_tuple(def_color))
-	DISPLAY.blit(def_surf,def_rect)
+	# first row
 	def_text = smallfont.render("default",True,hex_tuple(color_000))
 	DISPLAY.blit(def_text,(color_x,init_y))
-	def_rgb = smallfont.render(str(def_color),True,hex_tuple(color_000))
-	DISPLAY.blit(def_rgb,(color_x+180,init_y))
 
-	init_y+=80
-	draw_color = cur_color
-	cam_rect = pygame.Rect(color_x+120,init_y,50,70)
-	cam_surf = pygame.Surface((50,70))
-	cam_surf.fill(hex_tuple(draw_color))
-	DISPLAY.blit(cam_surf,cam_rect)
+	def_rect = pygame.Rect(color_x+80,init_y,50,70)
+	def_surf = pygame.Surface((50, 50))
+	def_surf.fill(hex_tuple(def_color))
+	DISPLAY.blit(def_surf,def_rect)
+
+	def_rgb = smallfont.render(str(def_color),True,hex_tuple(color_000))
+	DISPLAY.blit(def_rgb,(color_x+140,init_y))
+
+	init_y+=70
+	# second row
 	cam_text = smallfont.render("CAM",True,hex_tuple(color_000))
 	DISPLAY.blit(cam_text,(color_x,init_y))
+
+	draw_color = cur_color
+	cam_rect = pygame.Rect(color_x+80,init_y,50,70)
+	cam_surf = pygame.Surface((50,50))
+	cam_surf.fill(hex_tuple(draw_color))
+	DISPLAY.blit(cam_surf,cam_rect)
+
 	cam_rgb = smallfont.render(str(draw_color),True,hex_tuple(color_000))
-	DISPLAY.blit(cam_rgb,(color_x+180,init_y))
+	DISPLAY.blit(cam_rgb,(color_x+140,init_y))
 	
 	cam_diff_str = get_difference(def_color,cur_color)#str(cur_refresh_vals[1])
 	cam_diff_str = round(cam_diff_str,5)
 	cam_diff_str = str(cam_diff_str) + " / " + str(def_threshold)
 	cam_diff = smallfont.render(cam_diff_str,True,hex_tuple(color_000))
-	DISPLAY.blit(cam_diff,(color_x+350,init_y))
+	DISPLAY.blit(cam_diff,(color_x+140,init_y+25))
 	#draw color wheel match
 	cur_w = 0
 	cur_radius = 10
@@ -159,7 +163,7 @@ def draw_cam_color():
 	return draw_color
 
 def refresh_servo():
-	servo_color = Color("gray") 
+	servo_color = Color("gray")
 	if servo.check_moving() is 1:
 		servo_color = Color("green")
 	servo_pos = servo.get_pos()
@@ -185,10 +189,8 @@ def refresh_bins(tgt_bin_list):
 		if idx == int(max_bin/2)+1:
 			cur_x += int(screen_w/2)
 			cur_bin_y = init_bin_y-60
-	# draw last bin last
 	bin_list[0].move_to(cur_x,cur_bin_y)
 	bin_list[0].draw_bin(DISPLAY)
-	
 
 def init_cam():
 	# default_color = cam.get_color(bead_loc_x,bead_loc_y)
@@ -196,8 +198,6 @@ def init_cam():
 	cam.set_default_color(default_color)
 	cam.set_default_viewport(bead_loc_x,bead_loc_y,bead_loc_dimension)
 	cam.set_overlay_img(bead_loc_x,bead_loc_y,bead_loc_dimension,default_color)
-	# cam.save_img_locally()
-
 	cam.add_overlay()
 	cur_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
 def main():
@@ -216,7 +216,6 @@ def main():
 	while True:
 		global cur_color
 		cur_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
-		# print("main loop",cur_color)
 		for event in pygame.event.get():
 			if event.type==QUIT:
 				pygame.quit()
@@ -226,52 +225,28 @@ def main():
 					pygame.quit()
 					sys.exit()
 				if event.key == pygame.K_LEFT:
-					servo.set_pos(servo.get_pos()-servo_interval)
+					nema.run(2,True)
 				if event.key == pygame.K_RIGHT:
-					servo.set_pos(servo.get_pos()+servo_interval)
+					nema.run(2,False)
 				if event.key == pygame.K_q: # dispense to graveyard
-					logging.info("graveyard")
-					servo.set_pos_delay(position_dict["graveyard"],servo_delay,True)
+					nema.run(nema_interval,True)
 				if event.key == pygame.K_e: # dispense to filter
-					logging.info("filter")
-					servo.set_pos_delay(position_dict["filter"],servo_delay,True)
+					nema.run(nema_interval,False)
 				if event.key == pygame.K_w: # to home
-					logging.info("home")
-					servo.set_pos_delay(position_dict["home"],servo_delay,True)
-					time.sleep(1)
-				if event.key == pygame.K_t:
-					# cur_color = cam.get_refresh_vals(bead_loc_x,bead_loc_y,bead_loc_dimension)[0]
-					cur_color = refresh_vals()[0]
-					print("setting default",cur_color)
-					cam.set_default_color(cur_color)
-					cam.set_default_viewport(bead_loc_x,bead_loc_y,bead_loc_dimension)
-					cam.remove_overlay()
-					cam.set_overlay_img(bead_loc_x,bead_loc_y,bead_loc_dimension,cur_color)
-					cam.add_overlay()
-					# stepper 0
-					stepper.set_position(0)
-				if event.key == pygame.K_s:
-					sort_mode = not sort_mode
-					print("sorting mode ",sort_mode)
-				if event.key == pygame.K_a:
-					logging.info("run_motor")
-					motor.run_delay(wiggle_delay,motor_delay)
-				if event.key == pygame.K_g:
-					logging.info("run sequence")
-				if event.key == pygame.K_h:
-					for i in range(20):
-						motor.run_delay(motor_delay + i*0.02,0.2)
-				if event.key == pygame.K_n:
-					print("stepper left")
-					stepper.move(stepper_interval,True)
-				if event.key == pygame.K_m:
-					print("stepper right")
+					nema.ease(134,True)
+				if event.key == pygame.K_i:
 					stepper.move(stepper_interval,False)
-		if sort_mode:
-			if motion_thread.is_alive() is False:
-				print("sorting bead")
-				motion_thread = Thread(target=sort_bead,args=(bin_list,))
-				motion_thread.start()
+				if event.key == pygame.K_p:
+					stepper.move(stepper_interval,True)
+				if event.key == pygame.K_k:
+					stepper.cleanup()
+				if event.key == pygame.K_h:
+					logging.info("home")
+					for i in range(0,100):
+						if endstop.is_engaged() is False:
+							stepper.move(stepper_interval,True)
+							time.sleep(0.01)
+					stepper.cleanup()
 		DISPLAY.fill(hex_tuple(Color("white"))) #clear screen
 		refresh_bins(bin_list)
 		refresh_servo()

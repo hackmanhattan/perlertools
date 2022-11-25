@@ -6,8 +6,8 @@ screen_h = 800
 cam_w = 640
 cam_h = 480
 
-bead_loc_x = 325
-bead_loc_y = 135
+bead_loc_x = 250
+bead_loc_y = 200
 bead_loc_w = 40
 bead_loc_h = 50
 bead_loc_dimension = (bead_loc_w,bead_loc_h)
@@ -50,3 +50,6 @@ stepper_pin_list = [5,6,12,13]
 stepper_interval =  int(2048/8)
 
 max_bin = 10
+
+# nema config
+nema_interval=67
