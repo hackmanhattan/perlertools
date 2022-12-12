@@ -27,6 +27,7 @@ step_sequence = [[1,0,0,1],
 class Stepper:
 	pin_list = []
 	speed = 0.01
+	moving = False
 	def  __init__(self,tgt_pin_list):
 		self.pin_list = tgt_pin_list
 		GPIO.setmode(GPIO.BCM)
@@ -43,6 +44,7 @@ class Stepper:
 
 	def run_motor(self,tgt_dir,tgt_step_count):
 		motor_step_cnt = 0
+		moving = True
 		for idx in range(tgt_step_count):
 			for pin in range(0,len(self.pin_list)):
 				GPIO.output(self.pin_list[pin],step_sequence[motor_step_cnt][pin])
@@ -54,3 +56,6 @@ class Stepper:
 				cleanup()
 				exit(1)
 			time.sleep(self.speed)
+		moving = False
+	def is_moving(self):
+		return self.moving

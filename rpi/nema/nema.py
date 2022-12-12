@@ -6,7 +6,7 @@ class Nema:
 	dir_pin = 20   # Direction GPIO Pin
 	step_pin_ = 16  # Step GPIO Pin
 	en_pin = 21
-	delay = 0.004
+	delay = 0.002
 	def __init__(self,tgt_dir,tgt_step,tgt_en,tgt_delay):
 		self.dir_pin = tgt_dir
 		self.step_pin = tgt_step
@@ -45,23 +45,18 @@ class Nema:
 		wiggle_steps = 6
 		#left 
 		GPIO.output(self.dir_pin,GPIO.LOW)
+		delay_modifier = 8
 		for i in range(0,wiggle_steps):
 			GPIO.output(self.step_pin,GPIO.HIGH)
-			sleep(self.delay/4)
+			sleep(self.delay/delay_modifier)
 			GPIO.output(self.step_pin,GPIO.LOW)
-			sleep(self.delay/4)
+			sleep(self.delay/delay_modifier)
 		GPIO.output(self.dir_pin,GPIO.HIGH)
-		for i in range(0,wiggle_steps*2):
+		for i in range(0,wiggle_steps):
 			GPIO.output(self.step_pin,GPIO.HIGH)
-			sleep(self.delay/4)
+			sleep(self.delay/delay_modifier)
 			GPIO.output(self.step_pin,GPIO.LOW)
-			sleep(self.delay/4)
-		GPIO.output(self.dir_pin,GPIO.LOW)
-		for i in range(0,wiggle_steps*2):
-			GPIO.output(self.step_pin,GPIO.HIGH)
-			sleep(self.delay/4)
-			GPIO.output(self.step_pin,GPIO.LOW)
-			sleep(self.delay/4)
+			sleep(self.delay/delay_modifier)
 	def runDelay(self,tgt_steps,tgt_cw,tgt_delay):
 		if tgt_cw:
 			GPIO.output(self.dir_pin,GPIO.HIGH)

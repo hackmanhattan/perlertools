@@ -64,13 +64,19 @@ class ColorCam:
 			color_r = 0
 			color_n = 0
 			total_pixel_cnt = tgt_dimension[0]*tgt_dimension[1]
+			middle_space = 2
 			for currow in range(tgt_dimension[1]):
 				for curcol in range(tgt_dimension[0]):
-					cur_pixel = img[currow,curcol]
-					if cur_pixel[0]+cur_pixel[1]+cur_pixel[2]>0:
-						color_r += cur_pixel[2]
-						color_g += cur_pixel[1]
-						color_b += cur_pixel[0]
+					row_cond = currow > ((tgt_dimension[0]/2)-middle_space) and currow < ((tgt_dimension[0]/2)+middle_space)
+					col_cond = curcol > ((tgt_dimension[1]/2)-middle_space) and curcol < ((tgt_dimension[1]/2)+middle_space)
+					if row_cond and col_cond:
+						continue
+					else:
+						cur_pixel = img[currow,curcol]
+						if cur_pixel[0]+cur_pixel[1]+cur_pixel[2]>0:
+							color_r += cur_pixel[2]
+							color_g += cur_pixel[1]
+							color_b += cur_pixel[0]
 			sample_color = list((int(color_r/total_pixel_cnt)/255,int(color_g/total_pixel_cnt)/255,int(color_b/total_pixel_cnt)/255))
 			# return color
 			sample_color = sample_color[::-1]

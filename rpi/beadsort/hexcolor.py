@@ -2,7 +2,13 @@ from colour import Color
 
 
 def generate_circle_color(tgt_detail):
-	ret_list = [Color("red"),Color("yellow"),Color("green"),Color("cyan"),Color("blue"),Color("violet")]
+	#ret_list = [Color("black"),Color("red"),Color("green"),Color("blue"),Color("violet"),Color("yellow")]
+	ret_list = [Color("black")]
+	ret_list.append(Color("#040404"))	#,Color("#ffbddd")]
+	ret_list.append(Color("#74c2de"))
+	ret_list.append(Color("#fb91d5"))
+	ret_list.append(Color("#d8dccd"))
+	#,Color("#99e2fb"),Color("#111111")]
 	for i in range(tgt_detail):
 		cur_list = ret_list
 		new_list = []
@@ -16,17 +22,15 @@ def generate_circle_color(tgt_detail):
 def get_closest_wheel_color(tgt_color,tgt_color_list):
 	cur_idx = 0
 	cur_diff = 1000.0
-	
-	for idx in range(len(tgt_color_list)):
-		tmp_diff = get_hsl_difference(tgt_color,tgt_color_list[idx])
-		if cur_diff > tmp_diff:
+	for idx in range(1,len(tgt_color_list)):
+		tmp_diff = get_difference(tgt_color,tgt_color_list[idx])
+		if cur_diff > tmp_diff and tmp_diff <0.17:
 			cur_diff = tmp_diff
 			cur_idx = idx
 	return cur_idx
 
 def hex_tuple(tgt_color):
 	return [element*255 for element in tgt_color.rgb]
-
 
 def get_difference(tgt_color_a,tgt_color_b):
 	res = 0
@@ -48,5 +52,4 @@ def mix_color(tgt_color_a,tgt_color_b):
 	for i in range(3):
 		cur_avg = (tgt_color_a.rgb[i]+tgt_color_b.rgb[i])/2
 		res.append(cur_avg)
-
 	return Color(rgb=tuple(res))
