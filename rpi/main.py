@@ -21,7 +21,7 @@ smallfont = pygame.font.SysFont('Arial',25)
 
 color_000 = Color("black")
 stepper = Stepper(stepper_pin_list)
-stepper.set_delay(0.00075)
+stepper.set_delay(0.00070)
 nema = Nema(20,16,21,0.004)
 DISPLAY= pygame.display.set_mode((screen_w, screen_h))
 cam = ColorCam()
@@ -39,6 +39,14 @@ def get_bead():
 	cur_diff = get_difference(cur_color,default_color)
 	global sort_mode
 	while cur_diff < def_threshold:
+		for event in pygame.event.get():
+			if event.type==QUIT:
+				pygame.quit()
+				sys.exit()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_ESCAPE:
+					exit()
+		# refresh_display()
 		cur_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
 		nema.run(4,True)
 		cur_diff = get_difference(cur_color,default_color)
@@ -46,29 +54,27 @@ def get_bead():
 			print("detected bead")
 			break
 		repeat_cnt+=1
-		if repeat_cnt > 20:
+		if repeat_cnt > 30:
 			nema.run(18,False)
-			repeat_cnt = 20
-			break
+			repeat_cnt = 0
 			print("giving up, jam?")
-			sort_mode = False
-			return Bead(Color("black"))
+			#sort_mode = False
+			#return Bead(Color("black"))
 	#return bead
 	#move forward a bit
-	nema.run(10,True)
+	nema.run(6,True)
 	cur_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
 	ret_bead = Bead(cur_color)
-	print(ret_bead.get_color())
 	return ret_bead
 def stepper_home():
 	# home
 	while sort_endstop.is_engaged() is False:
 		stepper.move(stepper_interval,True)
-		DISPLAY.fill(hex_tuple(Color("white"))) #clear screen
-		refresh_bins()
-		refresh_stepper()
-		draw_cam_color()
-		pygame.display.update()
+		# DISPLAY.fill(hex_tuple(Color("white"))) #clear screen
+		# refresh_bins()
+		# refresh_stepper()
+		# draw_cam_color()
+		# pygame.display.update()
 	stepper.set_position(0)
 	stepper.cleanup()
 def dispense_bead(tgt_bead_idx,tgt_debug=False):
@@ -80,17 +86,11 @@ def dispense_bead(tgt_bead_idx,tgt_debug=False):
 	print("going to ",stepper.get_pos(),"vs",tgt_bead_idx*stepper_slot_rotation)
 	while stepper.get_pos()>(tgt_bead_idx*stepper_slot_rotation*-1):
 		stepper.move(move_interval,True)
-		DISPLAY.fill(hex_tuple(Color("white"))) #clear screen
-		refresh_bins()
-		refresh_stepper()
-		draw_cam_color()
-		pygame.display.update()
-	nema.run(68,True)
-	nema.wiggle()
-	nema.run(8,True)
+	nema.run(58,True)
+	time.sleep(0.5)
 	# go back other way if okay
-	if tgt_bead_idx<4:
-		stepper.move(tgt_bead_idx*stepper_slot_rotation-32,False)
+	if tgt_bead_idx<3:
+		stepper.move(tgt_bead_idx*stepper_slot_rotation,False)
 	else:
 		stepper_home()
 def get_tgt_bin(tgt_bead,tgt_bin_list):
@@ -136,9 +136,17 @@ def draw_cam_color():
 	def_surf = pygame.Surface((50, 50))
 	def_surf.fill(hex_tuple(def_color))
 	DISPLAY.blit(def_surf,def_rect)
+ 
+	def_rect_b = pygame.Rect(color_x+140,init_y,50,70)
+	def_surf_b = pygame.Surface((50, 50))
+	tmp_color = cam.get_color(bead_loc_x,bead_loc_y,bead_loc_dimension)
+	def_surf_b.fill(hex_tuple(tmp_color))
+	DISPLAY.blit(def_surf_b,def_rect_b)
 
-	def_rgb = smallfont.render(str(def_color),True,hex_tuple(color_000))
-	DISPLAY.blit(def_rgb,(color_x+140,init_y))
+	def_rgb = smallfont.render(str(def_color) ,True,hex_tuple(color_000))
+	DISPLAY.blit(def_rgb,(color_x+220,init_y))
+	def_rgb = smallfont.render(str(tmp_color) ,True,hex_tuple(color_000))
+	DISPLAY.blit(def_rgb,(color_x+220,init_y+24))
 
 	init_y+=70
 	# second row

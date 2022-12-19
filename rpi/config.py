@@ -7,9 +7,9 @@ cam_w = 640
 cam_h = 480
 
 bead_loc_x = 320
-bead_loc_y = 345
-bead_loc_w = 40
-bead_loc_h = 40
+bead_loc_y = 354
+bead_loc_w = 36
+bead_loc_h = 36
 bead_loc_dimension = (bead_loc_w,bead_loc_h)
 init_bin_y = cam_h
 
@@ -20,8 +20,8 @@ color_wheel_x = 800
 color_wheel_y = 350
 
 max_threshold = get_difference(Color("black"),Color("white"))
-color_threshold = max_threshold/10-0.01
-def_threshold = 0.26#color_threshold*0.25
+color_threshold = max_threshold/8
+def_threshold = max_threshold/5
 
 motor_duration = 0.4
 wiggle_delay = motor_duration * 0.5
@@ -42,7 +42,7 @@ servo_win_y = color_y + 160 + 10
 servo_delay = 0.0015
 servo_interval = 2.5
 
-def_color = "#f9f6fc"
+def_color = "#ece4f4"
 bead_yellow = "#faef6e"
 bead_blue = "#baefed"
 
