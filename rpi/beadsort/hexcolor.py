@@ -4,10 +4,11 @@ from colour import Color
 def generate_circle_color(tgt_detail):
 	#ret_list = [Color("black"),Color("red"),Color("green"),Color("blue"),Color("violet"),Color("yellow")]
 	ret_list = [Color("black")]
-	ret_list.append(Color("#040404"))	#,Color("#ffbddd")]
+	ret_list.append(Color("#080808"))	#,Color("#ffbddd")]
 	ret_list.append(Color("#74c2de"))
 	ret_list.append(Color("#fb91d5"))
-	ret_list.append(Color("#d8dccd"))
+	ret_list.append(Color("#e3b68a"))
+	#Wret_list.append(Color("#edc99b")) #d8dccd
 	#,Color("#99e2fb"),Color("#111111")]
 	for i in range(tgt_detail):
 		cur_list = ret_list

@@ -6,7 +6,7 @@ class Nema:
 	dir_pin = 20   # Direction GPIO Pin
 	step_pin_ = 16  # Step GPIO Pin
 	en_pin = 21
-	delay = 0.002
+	delay = 0.001
 	def __init__(self,tgt_dir,tgt_step,tgt_en,tgt_delay):
 		self.dir_pin = tgt_dir
 		self.step_pin = tgt_step
