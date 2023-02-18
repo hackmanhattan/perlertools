@@ -21,15 +21,17 @@ Servo funnel_servo;
 #define funnel_servo_pin 5
 #define slider_servo_pin 7
 #define filter_pos 55
-#define home_pos 90
+#define home_pos 95
 #define graveyard_pos 130
-#define move_delay 20
-#define wiggle_delay 125
-#define wiggle_range 10
-#define filter_threshold 50
+#define move_delay 12
+#define wiggle_delay 100
+#define wiggle_range 15
+
 #define funnel_servo_delay 15
 #define funnel_home 90
-#define scan_delay 50
+#define scan_delay 40
+#define middle_delay 10
+#define filter_threshold 150
 /*
 //TCS34725_INTEGRATIONTIME_2_4MS = 0xFF, *< 2.4ms 
 TCS34725_INTEGRATIONTIME_24MS =0xF6, /**< 24ms 
@@ -84,7 +86,7 @@ void loop() {
       } else if(command=='e') {
         move_slider(cur_slider_pos-1);
       } else if(command=='w') {
-        scan_color();
+        scan_color(false);
       } else if(command=='i') {
          move_slider(graveyard_pos);
          delay(200);
@@ -97,13 +99,13 @@ void loop() {
    
       } else if(command=='k') {
           //save color
-        save_color();
+        save_color(true);
       } else if(command=='l') {
           //prime the chamber
           if(sort_mode) {
             funnel_servo.write(funnel_home);
           } else {
-            funnel_servo.write(funnel_home-8);
+            funnel_servo.write(funnel_home-6);
           }
           sort_mode = !sort_mode;
       } else if(command==',') {
@@ -130,9 +132,10 @@ void loop() {
       }
 
   }
-  if(sort_mode==true){ 
+  if(sort_mode==true){
+    middle();
     delay(150);
-    scan_color();
+    scan_color(true);
     float filter_diff = color_diff(cur_r,cur_g,cur_b,tgt_r,tgt_g,tgt_b);
     Serial.print("cur_r:");Serial.print(cur_r);
     Serial.print(" cur_g:");Serial.print(cur_g);
@@ -158,36 +161,54 @@ void loop() {
  
 }
 
-double color_diff(int16_t  ri,int16_t  gi,int16_t  bi,int16_t  rf,int16_t  gf,int16_t  bf) {
-  int16_t sum = sq(abs(ri-rf)) + sq(gi-gf) + sq(bi-bf);
-  int r_sq = sq(ri-rf);
-  Serial.print("yo:");
-  Serial.print(ri);Serial.print("-");Serial.print(rf);Serial.print("=");
-  Serial.print(ri-rf);Serial.println("");
+double color_diff(long ri,long gi,long bi,long rf,long gf,long bf) {
+  long sum = sq(abs(ri-rf)) + sq(abs(gi-gf)) + sq(abs(bi-bf));
+  long r_sq = (ri-rf)*(ri-rf);
+  Serial.println("color diff:");
+  Serial.print(ri);Serial.print("\t");Serial.print(gi);Serial.print("\t");Serial.print(bi);Serial.println("\t");
+  Serial.print(rf);Serial.print("\t");Serial.print(gf);Serial.print("\t");Serial.print(bf);Serial.println("\t");
+  Serial.print(rf-ri);Serial.print("\t");Serial.print(gf-gi);Serial.print("\t");Serial.print(bf-bi);Serial.println("\t");
   Serial.print(r_sq);Serial.print("~");Serial.print(sq(ri-rf));
   
   Serial.println("");
   return sqrt(sum);
 }
 void middle() {
-  slider_servo.write(home_pos);              // tell servo to go to position in variable 'pos'
+  // ease to middle
+  Serial.print("cur slider pos: ");Serial.println(cur_slider_pos);
+  if(cur_slider_pos < home_pos) {
 
+    for(int pos = cur_slider_pos; pos<home_pos;pos++) {
+      slider_servo.write(pos);
+      cur_slider_pos = pos;
+      delay(middle_delay);
+
+    }
+  } else {
+    for(int pos = cur_slider_pos; pos>home_pos;pos--) {
+      slider_servo.write(pos);
+      cur_slider_pos = pos;
+      delay(middle_delay);
+    }
+  }
+  slider_servo.write(home_pos);              // tell servo to go to position in variable 'pos'
+  
     for (int pos = home_pos; pos <home_pos+wiggle_range; pos += 1) { // goes from 180 degrees to 0 degrees
       slider_servo.write(pos);              // tell servo to go to position in variable 'pos'
-      delay(wiggle_delay);                       // waits 15ms for the servo to reach the position
+      delay(middle_delay);                       // waits 15ms for the servo to reach the position
       
     }
     for (int pos = home_pos+wiggle_range; pos >home_pos-wiggle_range; pos -= 1) { // goes from 180 degrees to 0 degrees
       slider_servo.write(pos);              // tell servo to go to position in variable 'pos'
-      delay(wiggle_delay);
+      delay(middle_delay);
    
     }
   for (int pos = home_pos-wiggle_range; pos <home_pos; pos += 1) { // goes from 180 degrees to 0 degrees
     slider_servo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(wiggle_delay);                       // waits 15ms for the servo to reach the position
+    delay(middle_delay);                       // waits 15ms for the servo to reach the position
   
   }
-  delay(wiggle_delay);                       // waits 15ms for the servo to reach the position
+  delay(middle_delay);                       // waits 15ms for the servo to reach the position
   slider_servo.write(home_pos);
   cur_slider_pos = home_pos;
 }
@@ -218,7 +239,7 @@ void read_color(boolean debug) {
   uint16_t r,g,b,rt, gt, bt, c;
   tcs.getRawData(&r, &g, &b, &c);
 
-  if(millis()-last_millis > 10000) {
+  if(millis()-last_millis > 2000) {
     last_millis = millis();
       Serial.print(r);Serial.print(",");
   Serial.print(g);Serial.print(",");
@@ -227,11 +248,18 @@ void read_color(boolean debug) {
   }
 
 }
-void scan_color() {
+void scan_color(boolean debug) {
   uint16_t r,g,b, c;
   uint16_t color_sum = 10000000;
   slider_servo.write(home_pos); 
   cur_slider_pos = home_pos;
+  if(debug) {
+    tcs.getRawData(&r, &g, &b, &c);
+      cur_r = r;
+      cur_g = g;
+      cur_b = b;
+      return;
+  }
   for(int i=home_pos;i<home_pos+wiggle_range;i++) {
     slider_servo.write(i); 
     cur_slider_pos = i;
@@ -284,13 +312,20 @@ void scan_color() {
   
 }
 
-void save_color() {
+void save_color(boolean debug) {
   uint16_t r, g, b, c,color_sum;
   uint16_t rt, gt, bt;
   rt = gt = bt = 0;
   color_sum = 1000000;
   slider_servo.write(home_pos); 
   cur_slider_pos = home_pos;
+  if(debug) {
+    tcs.getRawData(&r, &g, &b, &c);
+          tgt_r = r;
+      tgt_g = g;
+      tgt_b = b;
+      return;
+  }
   for(int i=home_pos;i<home_pos+wiggle_range;i++) {
     slider_servo.write(i); 
     cur_slider_pos = i;
@@ -333,7 +368,7 @@ void save_color() {
     cur_slider_pos = i;
   }
 
-  Serial.println("saved current color:");
+  Serial.print("saved current color:");
   Serial.print(tgt_r);Serial.print(",");
   Serial.print(tgt_g);Serial.print(",");
   Serial.print(tgt_b);Serial.print(",");
